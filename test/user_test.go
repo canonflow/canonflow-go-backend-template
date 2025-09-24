@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -212,6 +213,79 @@ func TestLoginWrongPassword(t *testing.T) {
 	/*
 		=== RUN   TestLoginWrongPassword
 		--- PASS: TestLoginWrongPassword (0.07s)
+		PASS
+	*/
+}
+
+func TestLogoutSuccess(t *testing.T) {
+	app := InitServer()
+
+	// Request Body
+	body := map[string]string{
+		"username": "username_test",
+		"password": "password",
+	}
+
+	// Encode Body
+	jsonBody, err := json.Marshal(body)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(jsonBody))
+	request.Header.Set("Content-Type", "application/json")
+
+	// Record
+	recorder := httptest.NewRecorder()
+	app.ServeHTTP(recorder, request)
+
+	// Response
+	response := recorder.Result()
+	cookies := response.Cookies()
+	var authCookie *http.Cookie
+	for _, c := range cookies {
+		if c.Name == "Authorization" {
+			authCookie = c
+			break
+		}
+	}
+
+	assert.NotNil(t, authCookie)
+
+	// --- Step 2: Call Logout with cookie ---
+	logoutReq := httptest.NewRequest("POST", "/auth/logout", nil)
+	logoutReq.AddCookie(authCookie)
+
+	logoutRec := httptest.NewRecorder()
+	app.ServeHTTP(logoutRec, logoutReq)
+
+	logoutResponsse := logoutRec.Result()
+
+	assert.Equal(t, 200, logoutResponsse.StatusCode)
+
+	/*
+		=== RUN   TestLogoutSuccess
+		--- PASS: TestLogoutSuccess (0.07s)
+		PASS
+	*/
+}
+
+func TestLogoutFailed(t *testing.T) {
+	app := InitServer()
+
+	request := httptest.NewRequest("POST", "/auth/logout", nil)
+	request.Header.Set("Content-Type", "application/json")
+
+	// Record
+	recorder := httptest.NewRecorder()
+	app.ServeHTTP(recorder, request)
+
+	// Response
+	response := recorder.Result()
+
+	assert.Equal(t, 401, response.StatusCode)
+
+	/*
+		=== RUN   TestLogoutFailed
+		--- PASS: TestLogoutFailed (0.01s)
 		PASS
 	*/
 }
