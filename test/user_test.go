@@ -119,3 +119,99 @@ func TestSignUpFailed(t *testing.T) {
 		PASS
 	*/
 }
+
+func TestLoginSuccess(t *testing.T) {
+	app := InitServer()
+
+	// Request Body
+	body := map[string]string{
+		"username": "username_test",
+		"password": "password",
+	}
+
+	// Encode Body
+	jsonBody, err := json.Marshal(body)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(jsonBody))
+	request.Header.Set("Content-Type", "application/json")
+
+	// Record
+	recorder := httptest.NewRecorder()
+	app.ServeHTTP(recorder, request)
+
+	// Response
+	response := recorder.Result()
+
+	assert.Equal(t, 200, response.StatusCode)
+
+	/*
+		=== RUN   TestLoginSuccess
+		--- PASS: TestLoginSuccess (0.07s)
+		PASS
+	*/
+}
+
+func TestLoginNotFound(t *testing.T) {
+	app := InitServer()
+
+	// Request Body
+	body := map[string]string{
+		"username": "username_test_not_found",
+		"password": "password",
+	}
+
+	// Encode Body
+	jsonBody, err := json.Marshal(body)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(jsonBody))
+	request.Header.Set("Content-Type", "application/json")
+
+	// Record
+	recorder := httptest.NewRecorder()
+	app.ServeHTTP(recorder, request)
+
+	// Response
+	response := recorder.Result()
+
+	assert.Equal(t, 404, response.StatusCode)
+
+	/*
+		--- PASS: TestLoginNotFound (0.01s)
+		=== RUN   TestLoginNotFound
+		PASS
+	*/
+}
+
+func TestLoginWrongPassword(t *testing.T) {
+	app := InitServer()
+
+	// Request Body
+	body := map[string]string{
+		"username": "username_test",
+		"password": "wrong_password",
+	}
+
+	// Encode Body
+	jsonBody, err := json.Marshal(body)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(jsonBody))
+	request.Header.Set("Content-Type", "application/json")
+
+	// Record
+	recorder := httptest.NewRecorder()
+	app.ServeHTTP(recorder, request)
+
+	// Response
+	response := recorder.Result()
+
+	assert.Equal(t, 400, response.StatusCode)
+
+	/*
+		=== RUN   TestLoginWrongPassword
+		--- PASS: TestLoginWrongPassword (0.07s)
+		PASS
+	*/
+}
