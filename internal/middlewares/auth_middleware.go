@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"canonflow-golang-backend-template/internal/models/domain"
 	"canonflow-golang-backend-template/internal/models/web"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,15 @@ var (
 	TOKEN_KEY    = "TOKEN"
 	USER_KEY     = "USER"
 )
+
+/*
+JWT Data
+{
+	"sub": user_id
+	"username": username
+	"expired" 12309127
+}
+*/
 
 func DeleteToken(ctx *gin.Context) {
 	ctx.SetCookie(TOKEN_COOKIE, "delete", -1, "", "", false, true)
@@ -77,6 +87,10 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 			fmt.Println(claims)
 
 			// TODO: Set the User
+			ctx.Set(USER_KEY, domain.User{
+				ID:       claims["sub"].(int64),
+				Username: claims["username"].(string),
+			})
 
 			// TODO: Set the Token (for logout)
 			ctx.Set(TOKEN_KEY, tokenString)

@@ -3,7 +3,7 @@ package domain
 import "time"
 
 type User struct {
-	ID        int64     `gorm:"column:id;primaryKey"`
+	ID        int64     `gorm:"column:id;primaryKey;autoIncrement"`
 	Username  string    `gorm:"column:username"`
 	Password  string    `gorm:"column:password"`
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -54,6 +55,36 @@ func (service *UserService) CreateAccessToken(user *domain.User) (string, error)
 	}
 
 	return tokenString, nil
+}
+
+func (service *UserService) Create(ctx context.Context, username string, password string) (domain.User, error) {
+	// TODO: Hash The Password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	// TODO: Start the transaction
+	tx := service.DB.WithContext(ctx)
+	defer tx.Rollback()
+
+	// TODO: Create User
+	user := domain.User{
+		Username: username,
+		Password: string(hashedPassword),
+	}
+
+	err = service.UserRepository.Create(tx, &user)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	// TODO: Just in case
+	if err = tx.Commit().Error; err != nil {
+		return domain.User{}, err
+	}
+
+	return user, nil
 }
 
 func (service *UserService) Login(user *domain.User, password string) (*web.SuccessResponse, error) {

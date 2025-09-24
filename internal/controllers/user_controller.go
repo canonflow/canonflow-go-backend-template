@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"canonflow-golang-backend-template/internal/middlewares"
+	"canonflow-golang-backend-template/internal/models/converter"
 	"canonflow-golang-backend-template/internal/models/domain"
 	"canonflow-golang-backend-template/internal/models/web"
 	"canonflow-golang-backend-template/internal/services"
@@ -22,6 +23,64 @@ func NewUserController(service *services.UserService, log *logrus.Logger) *UserC
 		Log:     log,
 		Service: service,
 	}
+}
+
+func (c *UserController) SignUp(ctx *gin.Context) {
+	// TODO: Validate
+	var request web.UserRequest
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, web.ErrorResponse{
+			Code:   http.StatusBadRequest,
+			Status: "Bad Request",
+			Error:  err.Error(),
+		})
+		ctx.Abort()
+		return
+	}
+
+	// TODO: Find The User by username
+	var user domain.User
+	err := c.Service.UserRepository.FindByUsername(c.Service.DB, &user, request.Username)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, web.ErrorResponse{
+			Code:   http.StatusBadRequest,
+			Status: "Bad Request",
+			Error:  err.Error(),
+		})
+		ctx.Abort()
+		return
+	}
+
+	//! If there the username is exists, then reject the request
+	if user.ID != 0 {
+		ctx.JSON(http.StatusBadRequest, web.ErrorResponse{
+			Code:   http.StatusBadRequest,
+			Status: "Bad Request",
+			Error:  "Username already taken",
+		})
+		ctx.Abort()
+		return
+	}
+
+	// TODO: Create user
+	user, err = c.Service.Create(ctx, request.Username, request.Password)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, web.ErrorResponse{
+			Code:   http.StatusBadRequest,
+			Status: "Bad Request",
+			Error:  "Failed to create user: " + err.Error(),
+		})
+		ctx.Abort()
+		return
+	}
+
+	// TODO: Return the response
+	ctx.JSON(http.StatusOK, web.SuccessResponse{
+		Code:   http.StatusOK,
+		Status: "OK",
+		Data:   converter.ToUserData(&user),
+	})
 }
 
 func (c *UserController) Login(ctx *gin.Context) {

@@ -22,6 +22,7 @@ func (c *RouterConfig) SetupGuestRouter() {
 
 	auth := c.App.Group("auth")
 	{
+		auth.POST("/signup", c.UserController.SignUp)
 		auth.POST("/login", c.UserController.Login)
 	}
 }
