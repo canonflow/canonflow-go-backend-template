@@ -88,7 +88,7 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 
 			// TODO: Set the User
 			ctx.Set(USER_KEY, domain.User{
-				ID:       claims["sub"].(int64),
+				ID:       int64(claims["sub"].(float64)),
 				Username: claims["username"].(string),
 			})
 
