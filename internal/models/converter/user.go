@@ -7,6 +7,7 @@ import (
 
 func ToUserData(data *domain.User) web.UserData {
 	return web.UserData{
+		ID:        data.ID,
 		Username:  data.Username,
 		CreatedAt: data.CreatedAt,
 		UpdatedAt: data.UpdatedAt,
