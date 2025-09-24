@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type UserController struct {
@@ -41,19 +42,22 @@ func (c *UserController) SignUp(ctx *gin.Context) {
 
 	// TODO: Find The User by username
 	var user domain.User
+
 	err := c.Service.UserRepository.FindByUsername(c.Service.DB, &user, request.Username)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, web.ErrorResponse{
-			Code:   http.StatusBadRequest,
-			Status: "Bad Request",
+	if err != nil && err != gorm.ErrRecordNotFound {
+		// unexpected error
+		ctx.JSON(http.StatusInternalServerError, web.ErrorResponse{
+			Code:   http.StatusInternalServerError,
+			Status: "Internal Server Error",
 			Error:  err.Error(),
 		})
 		ctx.Abort()
 		return
 	}
 
-	//! If there the username is exists, then reject the request
-	if user.ID != 0 {
+	//! If the username is exists, then reject the request
+	if err == nil {
+		// user found → username taken
 		ctx.JSON(http.StatusBadRequest, web.ErrorResponse{
 			Code:   http.StatusBadRequest,
 			Status: "Bad Request",
@@ -62,6 +66,15 @@ func (c *UserController) SignUp(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
+
+	// if user.ID != 0 {
+	// 	ctx.JSON(http.StatusBadRequest, web.ErrorResponse{
+	// 		Code:   http.StatusBadRequest,
+	// 		Status: "Bad Request",
+	// 		Error:  "Username already taken",
+	// 	})
+	// 	ctx.Abort()
+	// 	return
 
 	// TODO: Create user
 	user, err = c.Service.Create(ctx, request.Username, request.Password)

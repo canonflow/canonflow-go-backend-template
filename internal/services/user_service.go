@@ -65,7 +65,10 @@ func (service *UserService) Create(ctx context.Context, username string, passwor
 	}
 
 	// TODO: Start the transaction
-	tx := service.DB.WithContext(ctx)
+	tx := service.DB.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return domain.User{}, tx.Error
+	}
 	defer tx.Rollback()
 
 	// TODO: Create User
